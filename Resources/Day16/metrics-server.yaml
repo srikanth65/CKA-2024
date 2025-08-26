@@ -107,7 +107,7 @@ spec:
   - name: https
     port: 443
     protocol: TCP
-    targetPort: https
+    targetPort: 4443
   selector:
     k8s-app: metrics-server
 ---
@@ -133,7 +133,7 @@ spec:
       containers:
       - args:
         - --cert-dir=/tmp
-        - --secure-port=10250
+        - --secure-port=4443
         - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
         - --kubelet-use-node-status-port
         - --kubelet-insecure-tls
@@ -149,7 +149,7 @@ spec:
           periodSeconds: 10
         name: metrics-server
         ports:
-        - containerPort: 10250
+        - containerPort: 4443
           name: https
           protocol: TCP
         readinessProbe:
@@ -185,6 +185,21 @@ spec:
       - emptyDir: {}
         name: tmp-dir
 ---
+# apiVersion: apiregistration.k8s.io/v1
+# kind: APIService
+# metadata:
+#   labels:
+#     k8s-app: metrics-server
+#   name: v1.metrics.k8s.io
+# spec:
+#   group: metrics.k8s.io
+#   groupPriorityMinimum: 100
+#   insecureSkipTLSVerify: true
+#   service:
+#     name: metrics-server
+#     namespace: kube-system
+#   version: v1
+#   versionPriority: 100
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
@@ -194,9 +209,10 @@ metadata:
 spec:
   group: metrics.k8s.io
   groupPriorityMinimum: 100
-  insecureSkipTLSVerify: true
+  insecureSkipTLSVerify: true   # keep for now, remove if you configure proper certs
   service:
     name: metrics-server
     namespace: kube-system
+    port: 443
   version: v1beta1
   versionPriority: 100
